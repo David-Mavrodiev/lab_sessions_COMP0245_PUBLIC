@@ -135,7 +135,7 @@ def main():
     rss = np.sum(residuals**2)
     tss = np.sum((tau_mes_all - np.mean(tau_mes_all))**2)
 
-    f_statistic = ((tss - rss) / p) / (rss / (n - p - 1))
+    f_statistic = ((tss - rss) / p) / (rss / (n - p))
 
     mse = mean_squared_error(tau_mes_all, tau_pred_all)
     se = np.sqrt(np.diagonal(mse * np.linalg.pinv(np.dot(regressor_all.T, regressor_all))))
