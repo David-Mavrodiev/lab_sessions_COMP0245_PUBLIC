@@ -1,0 +1,40 @@
+DecisionTreeRegressor:
+
+Max-Depth: 5, Splitter: best
+Mean Squared Error: 0.08730583706373962
+R-squared: 0.6645863453824024
+
+Max-Depth: 3, Splitter: best
+Mean Squared Error: 0.08859918326652966
+R-squared: 0.6574542089685307
+
+Max-Depth: 3, Splitter: random
+Mean Squared Error: 0.19781127457408332
+R-squared: 0.2252256402500955
+
+Max-Depth: 3
+Mean Squared Error: 0.19837928105581398
+R-squared: 0.2324879289070304
+
+Max-Depth: 5
+Mean Squared Error: 0.2500474491683758
+R-squared: 0.03846232217046097
+
+Max-Depth: 5, Splitter: random
+Mean Squared Error: 0.17803031245765033
+R-squared: 0.31684104238101474
+
+
+Bagging Regressor:
+Mean Squared Error: 0.07042944010993278
+R-squared: 0.7263139465500071
+
+
+Random Forest Regressor:
+Mean Squared Error: 0.013908962439168162
+R-squared: 0.9462403993314737
+
+
+AdaBoost Regressor:
+Mean Squared Error: 0.07569097423404306
+R-squared: 0.7086544983474413
