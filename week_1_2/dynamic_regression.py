@@ -138,6 +138,7 @@ def main():
     f_statistic = ((tss - rss) / p) / (rss / (n - p))
 
     mse = mean_squared_error(tau_mes_all, tau_pred_all)
+    mae = np.mean(np.abs(tau_mes_all - tau_pred_all))
     se = np.sqrt(np.diagonal(mse * np.linalg.pinv(np.dot(regressor_all.T, regressor_all))))
     conf_intervals = [a - 1.96 * se, a + 1.96 * se]
     
@@ -146,6 +147,7 @@ def main():
     # # TODO compute the metrics for the linear model
     print(f"Adjusted R-squared: {adjusted_r2}")
     print(f"F-statistic: {f_statistic}")
+    print(f"MAE: {mae}")
     # results.write(f"\n\n\nAdjusted R-squared: {adjusted_r2}")
     # results.write(f"\n\nF-statistic: {f_statistic}")
     # results.write(f"\n\nConfidence intervals: {conf_intervals}")
