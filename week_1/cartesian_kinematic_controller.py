@@ -37,7 +37,7 @@ def main():
     
     print(f"joint vel limits: {joint_vel_limits}")
     
-
+    # 此处设定了正弦轨迹
     # Sinusoidal reference
     # Specify different amplitude values for each joint
     amplitudes = [0, 0.1, 0]  # Example amplitudes for 4 joints
@@ -59,6 +59,7 @@ def main():
     # Command and control loop
     cmd = MotorCommands()  # Initialize command structure for motors
     
+    # 控制器初始化 用于设定笛卡尔坐标系中的位置增益 方向增益 P控制 D控制 使用的是PID！
     # P conttroller high level
     kp_pos = 100 # position 
     kp_ori = 0   # orientation
@@ -83,15 +84,21 @@ def main():
         # Compute sinusoidal reference trajectory
         # Ensure q_init is within the range of the amplitude
         
+        # 此处为high level controller 根据坐标系的位置 逆运动学反推出机械臂期望的速度与位置
         p_d, pd_d = ref.get_values(current_time)  # Desired position and velocity
         
         # inverse differential kinematics
         ori_des = None
         ori_d_des = None
+
+        # 此处也是high level
         q_des, qd_des_clip = CartesianDiffKin(dyn_model,controlled_frame_name,q_mes, p_d, pd_d, ori_des, ori_d_des, time_step, "pos",  kp_pos, kp_ori, np.array(joint_vel_limits))
         
+        # 此处为low level 根据上面high level传回的位置与速度 控制力矩让机器人运动
         # Control command
-        cmd.tau_cmd = feedback_lin_ctrl(dyn_model, q_mes, qd_mes, q_des, qd_des_clip, kp, kd)  # Zero torque command
+        # cmd.tau_cmd = feedback_lin_ctrl(dyn_model, q_mes, qd_mes, q_des, qd_des_clip, kp, kd)  # Zero torque command
+        tau_cmd = feedback_lin_ctrl(dyn_model, q_mes, qd_mes, q_des, qd_des_clip, kp, kd)
+        cmd.SetControlCmd(tau_cmd, ["torque"] * 7) 
         sim.Step(cmd, "torque")  # Simulation step with torque command
 
         if dyn_model.visualizer: 

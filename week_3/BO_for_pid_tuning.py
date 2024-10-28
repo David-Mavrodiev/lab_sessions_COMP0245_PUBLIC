@@ -72,9 +72,11 @@ def simulate_with_given_pid_values(sim_, kp, kd, episode_duration=10):
         qd_mes = sim_.GetMotorVelocities(0)
     
         # Compute sinusoidal reference trajectory
-        q_des, qd_des = ref.get_values(current_time)  # Desired position and velocity
+        q_des, qd_des = ref.get_values(current_time)  # Desired position and velocity 此处是期望值！
         # Control command
-        cmd.tau_cmd = feedback_lin_ctrl(dyn_model, q_mes, qd_mes, q_des, qd_des, kp, kd)  # Zero torque command
+        # cmd.tau_cmd = feedback_lin_ctrl(dyn_model, q_mes, qd_mes, q_des, qd_des, kp, kd)  # Zero torque command
+        tau_cmd = feedback_lin_ctrl(dyn_model, q_mes, qd_mes, q_des, qd_des, kp, kd)
+        cmd.SetControlCmd(tau_cmd, ["torque"] * 7) 
         sim_.Step(cmd, "torque")  # Simulation step with torque command
 
         # Exit logic with 'q' key
@@ -110,15 +112,21 @@ def simulate_with_given_pid_values(sim_, kp, kd, episode_duration=10):
 
 
 # Objective function for optimization
+# 这个仿真的Objective function很好算 所以此处不用再用GP来拟合一个cost function
+# 更何况 这个仿真本身就已经是对于真实情况的一个“cost function”了
 def objective(params):
     kp = np.array(params[:7])  # First 7 elements correspond to kp
     kd = np.array(params[7:])  # Last 7 elements correspond to kd
-    episode_duration = 10
+    episode_duration = 10 # 模拟的时间
     
     # TODO Call the simulation with given kp and kd values
+    tracking_error = simulate_with_given_pid_values(sim, kp, kd, episode_duration)
 
-    # TODO Collect data for the first kp and kd  
-    
+    # TODO Collect data for the first kp and kd 
+    # 只管第一个kp和kd
+    kp0_values.append(kp[0])
+    kd0_values.append(kd[0])
+    tracking_errors.append(tracking_error)
     
     return tracking_error
 
@@ -162,7 +170,7 @@ def main():
     tracking_errors_array = np.array(tracking_errors)
 
     # Fit GP models
-    gp_kp0 = fit_gp_model_1d(kp0_values_array, tracking_errors_array)
+    gp_kp0 = fit_gp_model_1d(kp0_values_array, tracking_errors_array) # 这个函数在目前有点问题，需要修改（就是Objective3 optional的内容）
     gp_kd0 = fit_gp_model_1d(kd0_values_array, tracking_errors_array)
 
     # Plot the results
