@@ -29,25 +29,34 @@ import matplotlib.pyplot as plt
 #     0.9469323213956408   # max_depth=14
 # ]
 
-n_estimators = [30, 50, 80, 100]
-r2_scores = [
-    0.950808689083078,  # n_estimators=30
-    0.9506742574334276,  # n_estimators=50
-    0.948503900189452,  # n_estimators=80
-    0.9488326261546753, # n_estimators=100
-]
+# n_estimators = [30, 50, 80, 100]
+# r2_scores = [
+#     0.950808689083078,  # n_estimators=30
+#     0.9506742574334276,  # n_estimators=50
+#     0.948503900189452,  # n_estimators=80
+#     0.9488326261546753, # n_estimators=100
+# ]
 
+# landmarks = [3, 36, 100, 400]
+# time = [1.141615867614746, 2.873687982559204, 12.398455142974854, 632.3660137653351]
+
+landmarks = [1, 5, 10]
+time = [345.234256672 , 2.873687982559204, 1.234395980834961]
 
 # 创建折线图
 plt.figure(figsize=(8, 5))
-plt.plot(n_estimators, r2_scores, marker='o', linestyle='-', color='b', label='R² Score')
+plt.plot(landmarks, time, marker='o', linestyle='-', color='b')
 
 # 添加标签和标题
-plt.xlabel('Tree Depth')
-plt.ylabel('R² Score')
-plt.title('R² Scores at Different Tree Depths (Decision Tree)')
+plt.xlabel('Landmark Distance')
+plt.ylabel('Runtime (s)')
+plt.title('Runtime vs. Landmark Distance')
 plt.grid(True)
-plt.xticks(n_estimators)  # 确保 x 轴刻度与深度对应
+plt.xticks(landmarks)  # 确保 x 轴刻度与深度对应
+
+for i, txt in enumerate(time):
+    plt.annotate(f'{txt:.2f}', (landmarks[i], time[i]), textcoords="offset points", xytext=(0,10), ha='center')
+
 plt.legend()
 
 # 显示图表
