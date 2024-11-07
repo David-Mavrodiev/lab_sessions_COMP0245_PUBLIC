@@ -7,20 +7,22 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 import os
 import matplotlib.pyplot as plt
+from torch.optim.lr_scheduler import ExponentialLR
+from torch.optim.lr_scheduler import CosineAnnealingLR
 
 # Set the visualization flag
 visualize = True  # Set to True to enable visualization, False to disable
 training_flag = True  # Set to True to train the models, False to skip training
-test_cartesian_accuracy_flag = True  # Set to True to test the model with a new goal position, False to skip testing
+test_cartesian_accuracy_flag = False  # Set to True to test the model with a new goal position, False to skip testing
 
 # MLP Model Definition
 class JointAngleRegressor(nn.Module):
-    def __init__(self, hidden_units=128):
+    def __init__(self, hidden_units=512): # 自定义隐藏层神经元个数
         super(JointAngleRegressor, self).__init__()
         self.model = nn.Sequential(
-            nn.Linear(4, hidden_units),  # Input layer to hidden layer (4 inputs: time + goal positions)
-            nn.ReLU(),
-            nn.Linear(hidden_units, 1)   # Hidden layer to output layer
+            nn.Linear(4, hidden_units),  # Input layer to hidden layer (4 inputs: t, (x, y, z) 目标位置) 
+            nn.ReLU(), # 激活函数
+            nn.Linear(hidden_units, 1)   # Hidden layer to output layer (1 output: 每个时间t时刻，joint的位置)
         )
 
     def forward(self, x):
@@ -96,8 +98,9 @@ if training_flag:
             test_dataset = JointDataset(x_test_time, goal_test, y_test)
 
             # Create data loaders
-            train_loader = DataLoader(dataset=train_dataset, batch_size=32, shuffle=True)
-            test_loader = DataLoader(dataset=test_dataset, batch_size=32, shuffle=False)
+            # 调整batch_size，越大训练速度越快，但是可能会导致过拟合；越小训练速度越慢，但是可能会导致欠拟合
+            train_loader = DataLoader(dataset=train_dataset, batch_size=64, shuffle=True) # 原batch_size=32
+            test_loader = DataLoader(dataset=test_dataset, batch_size=64, shuffle=False)
 
             # Store loaders
             train_loaders.append(train_loader)
@@ -106,11 +109,14 @@ if training_flag:
         
 
         # Training parameters
-        epochs = 500
-        learning_rate = 0.01
+        # 超参数调整
+        epochs = 300
+        learning_rate = 0.1  # 学习率越大，训练速度越快，但是可能会导致震荡；学习率越小，训练速度越慢，但是可能会导致局部最优解
 
-        for joint_idx in range(7):
-
+        for joint_idx in range(1): # 临时更改 只训练一个joint
+            joint_idx = 3  # 临时更改 只训练id+1的joint
+        # for joint_idx in range(7):
+            
             # The name of the saved model
             model_filename = os.path.join(script_dir, f'neuralq{joint_idx+1}.pt')
 
@@ -122,15 +128,20 @@ if training_flag:
             print(f'\nTraining model for Joint {joint_idx+1}')
 
             # Initialize the model, criterion, and optimizer
-            model = JointAngleRegressor()
+            model = JointAngleRegressor() # hidden_units：越大模型越复杂，但是可能会导致过拟合；越小模型越简单，但是可能会导致欠拟合
             criterion = nn.MSELoss()
             optimizer = optim.SGD(model.parameters(), lr=learning_rate)
+            # 使用cos lr decay
+            # scheduler = ExponentialLR(optimizer, gamma=0.98)  # gamma：每个epoch，lr*gamma
+            # scheduler = CosineAnnealingLR(optimizer, T_max=epochs)
 
             train_loader = train_loaders[joint_idx]
             test_loader = test_loaders[joint_idx]
 
             train_losses = []
             test_losses = []
+            log_train_losses = []
+            log_test_losses = []
 
             # Training loop
             for epoch in range(epochs):
@@ -146,8 +157,11 @@ if training_flag:
 
                     epoch_loss += loss.item()
 
+                # scheduler.step() # 更新学习率
+                
                 train_loss = epoch_loss / len(train_loader)
                 train_losses.append(train_loss)
+                log_train_losses.append(np.log(train_loss))  # 计算log MSE
 
                 # Evaluate on test set for this epoch
                 model.eval()
@@ -159,6 +173,7 @@ if training_flag:
                         test_loss += loss.item()
                 test_loss /= len(test_loader)
                 test_losses.append(test_loss)
+                log_test_losses.append(np.log(test_loss))  # 计算log MSE
 
                 if (epoch + 1) % 10 == 0 or epoch == 0:
                     print(f'Epoch {epoch+1}/{epochs}, Train Loss: {train_loss:.6f}, Test Loss: {test_loss:.6f}')
@@ -166,9 +181,9 @@ if training_flag:
             # Final evaluation on test set
             print(f'Final Test Loss for Joint {joint_idx+1}: {test_losses[-1]:.6f}')
 
-            # Save the trained model
+            # Save the trained model 保存模型
             model_filename = os.path.join(script_dir, f'neuralq{joint_idx+1}.pt')
-            torch.save(model.state_dict(), model_filename)
+            # torch.save(model.state_dict(), model_filename) 
             print(f'Model for Joint {joint_idx+1} saved as {model_filename}')
 
             # Visualization (if enabled)
@@ -182,6 +197,17 @@ if training_flag:
                 plt.xlabel('Epoch')
                 plt.ylabel('Loss')
                 plt.title(f'Loss Curve for Joint {joint_idx+1}')
+                plt.legend()
+                plt.grid(True)
+                plt.show()
+
+                # plt log MSE 
+                plt.figure(figsize=(10, 5))
+                plt.plot(range(1, epochs + 1), log_train_losses, label='Log Training MSE')
+                plt.plot(range(1, epochs + 1), log_test_losses, label='Log Test MSE')
+                plt.xlabel('Epoch')
+                plt.ylabel('Log MSE')
+                plt.title(f'Log MSE Curve for Joint {joint_idx+1}')
                 plt.legend()
                 plt.grid(True)
                 plt.show()
@@ -263,7 +289,7 @@ if test_cartesian_accuracy_flag:
         'z': (0.12, 0.12)
     }
     # create a set of goal positions 
-    number_of_goal_positions_to_test = 10
+    number_of_goal_positions_to_test = 10 # 随机测试的goal position数 原10
     goal_positions = []
     for i in range(number_of_goal_positions_to_test):
         goal_positions.append([np.random.uniform(*goal_position_bounds['x']),
