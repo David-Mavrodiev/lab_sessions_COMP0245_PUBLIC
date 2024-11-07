@@ -22,7 +22,7 @@ X = np.vstack((x1, x2)).T
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
 # Initialize the model
-ada_regressor = AdaBoostRegressor(estimator=DecisionTreeRegressor(max_depth=4), n_estimators=50, random_state=42, loss='linear')
+ada_regressor = AdaBoostRegressor(estimator=DecisionTreeRegressor(max_depth=8), n_estimators=50, random_state=42, loss='linear')
 
 # Train the model
 ada_regressor.fit(X_train, y_train)

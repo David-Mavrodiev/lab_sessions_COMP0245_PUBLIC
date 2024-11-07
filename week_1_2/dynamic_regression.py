@@ -25,7 +25,7 @@ def main():
     # Configuration for the simulation
     conf_file_name = "pandaconfig.json"  # Configuration file for the robot
     cur_dir = os.path.dirname(os.path.abspath(__file__))
-    sim = pb.SimInterface(conf_file_name, conf_file_path_ext=cur_dir)  # Initialize simulation interface
+    sim = pb.SimInterface(conf_file_name, conf_file_path_ext=cur_dir, use_gui=False)  # Initialize simulation interface
 
     # Get active joint names from the simulation
     ext_names = sim.getNameActiveJoints()
@@ -79,7 +79,8 @@ def main():
         q_d, qd_d = ref.get_values(current_time)  # Desired position and velocity
         
         # Control command
-        cmd.tau_cmd = feedback_lin_ctrl(dyn_model, q_mes, qd_mes, q_d, qd_d, kp, kd)
+        tau_cmd = feedback_lin_ctrl(dyn_model, q_mes, qd_mes, q_d, qd_d, kp, kd)
+        cmd.SetControlCmd(tau_cmd, ["torque"]*7)  # Set the control command for the torque
         sim.Step(cmd, "torque")
 
         # Get measured torque
@@ -98,8 +99,11 @@ def main():
 
         
         # TODO Compute regressor and store it
-        regressor_all.append(dyn_model.ComputeDynamicRegressor(q_mes,qd_mes, qdd_mes))
-        tau_mes_all.append(tau_mes)
+        if current_time > 0.75:
+        # Store the regressor and the measured torque
+        
+            regressor_all.append(dyn_model.ComputeDynamicRegressor(q_mes,qd_mes, qdd_mes))
+            tau_mes_all.append(tau_mes)
         
         
         current_time += time_step
@@ -177,7 +181,7 @@ def main():
 
     # Show the combined plot
     plt.tight_layout()
-    # plt.show()
+    plt.show()
 
     
 
