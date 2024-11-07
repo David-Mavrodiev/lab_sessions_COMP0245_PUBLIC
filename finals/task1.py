@@ -187,54 +187,70 @@ def get_pd_results_with_correction(model):
     return q_real_corrected
 
 hidden_nodes_list = [32, 64, 96, 128]
-train_losses_results = {}
-validation_losses_results = {}
+train_losses_results = {'Shallow': {}, 'Deep': {}}
+validation_losses_results = {'Shallow': {}, 'Deep': {}}
 
 q_real_results = {}
-q_real_corrected_results = {}
+q_real_corrected_results = {'Shallow': {}, 'Deep': {}}
 
 q_real_results[f'PD Only'] = get_pd_results_without_correction()
 
-for nodes in hidden_nodes_list:
-    model = CorrectorMLP(label=f'PD + MLP Correction, Hidden Nodes: {nodes}', num_hidden_nodes=nodes, dataset=dataset)
-    train_losses, validation_losses = model.train_model(epochs = 1000)
+# Iterate over both shallow and deep models
+for model_type in ['Shallow', 'Deep']:
+    isDeepNetwork = model_type == 'Deep'
+    
+    for nodes in hidden_nodes_list:
+        model = CorrectorMLP(
+            label=f'{model_type} PD + MLP Correction, Hidden Nodes: {nodes}',
+            num_hidden_nodes=nodes,
+            dataset=dataset,
+            isDeepNetwork=isDeepNetwork
+        )
+        train_losses, validation_losses = model.train_model(epochs=1000)
 
-    train_losses_results[f'Hidden Nodes: {nodes}'] = train_losses
-    validation_losses_results[f'Hidden Nodes: {nodes}'] = validation_losses
-    q_real_corrected_results[model.label] = get_pd_results_with_correction(model)
+        # Store results based on model type
+        train_losses_results[model_type][f'Hidden Nodes: {nodes}'] = train_losses
+        validation_losses_results[model_type][f'Hidden Nodes: {nodes}'] = validation_losses
+        q_real_corrected_results[model_type][model.label] = get_pd_results_with_correction(model)
 
-print(q_real_corrected_results)
-
+# Plot training losses
 plt.figure(figsize=(10, 6))
-for nodes, losses in train_losses_results.items():
-    plt.plot(losses, label=nodes)
+for model_type, losses_dict in train_losses_results.items():
+    for nodes, losses in losses_dict.items():
+        linestyle = '--' if model_type == 'Shallow' else '-'
+        plt.plot(losses, label=f'{model_type} {nodes}', linestyle=linestyle)
 plt.xlabel('Epoch')
 plt.ylabel('Training Loss')
-plt.title('Training Loss for Different Hidden Node Counts')
+plt.title('Training Loss for Different Hidden Node Counts (Shallow vs Deep)')
 plt.legend()
 plt.show()
 
+# Plot validation losses
 plt.figure(figsize=(10, 6))
-for nodes, losses in validation_losses_results.items():
-    plt.plot(losses, label=nodes)
+for model_type, losses_dict in validation_losses_results.items():
+    for nodes, losses in losses_dict.items():
+        linestyle = '--' if model_type == 'Shallow' else '-'
+        plt.plot(losses, label=f'{model_type} {nodes}', linestyle=linestyle)
 plt.xlabel('Epoch')
 plt.ylabel('Validation Loss')
-plt.title('Validation Loss for Different Hidden Node Counts')
+plt.title('Validation Loss for Different Hidden Node Counts (Shallow vs Deep)')
 plt.legend()
 plt.show()
 
-# Plot results for each configuration
+# Trajectory tracking plot
 plt.figure(figsize=(12, 6))
 plt.plot(t, q_target, 'r-', label='Target')
 
-# Plot PD Only and PD + MLP corrected for each hidden node count
+# Plot PD Only and PD + MLP corrected results for each hidden node count
 for label, q_real in q_real_results.items():
     plt.plot(t, q_real, '--', label=label)
 
-for label, q_real_corrected in q_real_corrected_results.items():
-    plt.plot(t, q_real_corrected, ':', label=label)
+for model_type, corrected_dict in q_real_corrected_results.items():
+    for label, q_real_corrected in corrected_dict.items():
+        linestyle = '--' if model_type == 'Shallow' else '-'
+        plt.plot(t, q_real_corrected, linestyle, label=label)
 
-plt.title('Trajectory Tracking with and without MLP Correction for Different Hidden Node Counts')
+plt.title('Trajectory Tracking with and without MLP Correction (Shallow vs Deep)')
 plt.xlabel('Time [s]')
 plt.ylabel('Position')
 plt.legend()
@@ -244,55 +260,59 @@ plt.show()
 error_pd_only = np.array(q_target) - np.array(q_real_results['PD Only'])
 
 # Calculate errors for PD + MLP Correction with each hidden node count
-errors_pd_mlp_correction = {}
-for label, q_real_corrected in q_real_corrected_results.items():
-    errors_pd_mlp_correction[label] = np.array(q_target) - np.array(q_real_corrected)
+errors_pd_mlp_correction = {'Shallow': {}, 'Deep': {}}
+for model_type, corrected_dict in q_real_corrected_results.items():
+    for label, q_real_corrected in corrected_dict.items():
+        errors_pd_mlp_correction[model_type][label] = np.array(q_target) - np.array(q_real_corrected)
 
 # Calculate final error metrics (mean absolute error in this case)
-final_errors = {}
+final_errors = {'PD Only': np.mean(np.abs(error_pd_only))}
 
-# Baseline error for PD Only
-final_errors['PD Only'] = np.mean(np.abs(error_pd_only))
-
-# Errors for PD + MLP Correction for each hidden node configuration
-for label, errors in errors_pd_mlp_correction.items():
-    final_errors[label] = np.mean(np.abs(errors))
+for model_type, errors_dict in errors_pd_mlp_correction.items():
+    for label, errors in errors_dict.items():
+        final_errors[label] = np.mean(np.abs(errors))
 
 # Plotting the final error for each configuration
 plt.figure(figsize=(10, 6))
 plt.bar(final_errors.keys(), final_errors.values(), color=['blue', 'orange', 'green', 'red', 'purple'])
 plt.xlabel('Model Type')
 plt.ylabel('Mean Absolute Error')
-plt.title('Final Error Comparison for PD Only and PD + MLP Correction with Different Hidden Node Counts')
+plt.title('Final Error Comparison for PD Only and PD + MLP Correction (Shallow vs Deep)')
 plt.xticks(rotation=45)
 plt.show()
 
 # Training loss distribution
 plt.figure(figsize=(10, 6))
-plt.boxplot(train_losses_results.values(), labels=train_losses_results.keys())
+plt.boxplot([loss for losses_dict in train_losses_results.values() for loss in losses_dict.values()],
+            labels=[f'{model_type} {nodes}' for model_type, losses_dict in train_losses_results.items() for nodes in losses_dict.keys()])
 plt.xlabel('Hidden Node Count')
 plt.ylabel('Training Loss')
-plt.title('Training Loss Distribution for Different Hidden Node Counts')
+plt.title('Training Loss Distribution for Different Hidden Node Counts (Shallow vs Deep)')
 plt.show()
 
 # Validation loss distribution
 plt.figure(figsize=(10, 6))
-plt.boxplot(validation_losses_results.values(), labels=validation_losses_results.keys())
+plt.boxplot([loss for losses_dict in validation_losses_results.values() for loss in losses_dict.values()],
+            labels=[f'{model_type} {nodes}' for model_type, losses_dict in validation_losses_results.items() for nodes in losses_dict.keys()])
 plt.xlabel('Hidden Node Count')
 plt.ylabel('Validation Loss')
-plt.title('Validation Loss Distribution for Different Hidden Node Counts')
+plt.title('Validation Loss Distribution for Different Hidden Node Counts (Shallow vs Deep)')
 plt.show()
 
+# Cumulative error over time
 plt.figure(figsize=(12, 6))
 cumulative_error_pd_only = np.cumsum(np.abs(error_pd_only))
-plt.plot(t, cumulative_error_pd_only, label='PD Only')
+plt.plot(t, cumulative_error_pd_only, label='PD Only', linestyle='--')
 
-for label, errors in errors_pd_mlp_correction.items():
-    cumulative_error_mlp = np.cumsum(np.abs(errors))
-    plt.plot(t, cumulative_error_mlp, label=label)
+for model_type, errors_dict in errors_pd_mlp_correction.items():
+    for label, errors in errors_dict.items():
+        cumulative_error_mlp = np.cumsum(np.abs(errors))
+        linestyle = '--' if model_type == 'Shallow' else '-'
+        plt.plot(t, cumulative_error_mlp, label=label, linestyle=linestyle)
 
 plt.xlabel('Time [s]')
 plt.ylabel('Cumulative Absolute Error')
-plt.title('Cumulative Error Over Time for PD Only and PD + MLP Correction')
+plt.title('Cumulative Error Over Time for PD Only and PD + MLP Correction (Shallow vs Deep)')
 plt.legend()
 plt.show()
+
