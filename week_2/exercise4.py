@@ -30,17 +30,16 @@ print(f"Boosting MSE: {mse_boosting}")
 r2_boosting = r2_score(y_test, y_pred)
 print(f"Boosting Score: {r2_boosting}")
 
-# 绘图
 fig, ax = plt.subplots(1, 2, figsize=(12, 6))
 
-# 绘制真实值的2D图像
+# true values
 sc1 = ax[0].scatter(X_test[:, 0], X_test[:, 1], c=y_test, cmap='viridis')
 ax[0].set_title("True Values")
 ax[0].set_xlabel("x1")
 ax[0].set_ylabel("x2")
 fig.colorbar(sc1, ax=ax[0], label="y")
 
-# Decsion Tree预测值
+# Decsion Tree Prediction
 sc2 = ax[1].scatter(X_test[:, 0], X_test[:, 1], c=y_pred, cmap='viridis')
 ax[1].set_title("Boositng Prediction (max_depth=8)")
 ax[1].set_xlabel("x1")

@@ -20,7 +20,7 @@ IQR = Q3 - Q1
 lower_bound = Q1 - 2.3 * IQR
 upper_bound = Q3 + 2.3 * IQR
 
-# 过Filtering Outliers
+# Filtering Outliers
 mask = np.all((X >= lower_bound) & (X <= upper_bound), axis=1)
 X = X[mask]
 y = y[mask]
@@ -74,7 +74,7 @@ print(f"random forest MSE: {mse_ran_for}")
 r2_ran_for = r2_score(y_test, y_pred_boosting)
 print(f"random forest R^2 Score: {r2_ran_for}")
 
-# 绘制真实值与预测值对比 越接近红线 效果越好
+# true vs predicted
 plt.figure(figsize=(8, 6))
 plt.scatter(y_test, y_pred_boosting, color='blue', alpha=0.5)
 plt.plot([min(y_test), max(y_test)], [min(y_test), max(y_test)], color='red', linestyle='--')
@@ -84,5 +84,5 @@ plt.ylabel("Predicted House Price")
 plt.show()
 
 ##
-## 这是效果最好的！！
+## BEST ONE!!
 ##

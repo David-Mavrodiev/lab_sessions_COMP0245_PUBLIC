@@ -43,21 +43,17 @@ import matplotlib.pyplot as plt
 landmarks = [1, 5, 10]
 time = [345.234256672 , 2.873687982559204, 1.234395980834961]
 
-# 创建折线图
 plt.figure(figsize=(8, 5))
 plt.plot(landmarks, time, marker='o', linestyle='-', color='b')
 
-# 添加标签和标题
 plt.xlabel('Landmark Distance')
 plt.ylabel('Runtime (s)')
 plt.title('Runtime vs. Landmark Distance')
 plt.grid(True)
-plt.xticks(landmarks)  # 确保 x 轴刻度与深度对应
+plt.xticks(landmarks) 
 
 for i, txt in enumerate(time):
     plt.annotate(f'{txt:.2f}', (landmarks[i], time[i]), textcoords="offset points", xytext=(0,10), ha='center')
 
 plt.legend()
-
-# 显示图表
 plt.show()

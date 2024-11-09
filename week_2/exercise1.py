@@ -23,7 +23,7 @@ X = np.vstack((x1, x2)).T
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
 
-# Decision tree 决策树部分
+# Decision tree 
 tree = DecisionTreeRegressor(max_depth = 14)
 tree.fit(X_train, y_train)
 y_pred = tree.predict(X_test)
@@ -34,13 +34,13 @@ r2= r2_score(y_test, y_pred)
 print(f"Decision Tree R^2 Score: {r2}")
 
 
-# polynomial 多项式回归部分 线性回归
-# 构建degree = 5的多项式
+# polynomial 
+# degree = 5
 poly = PolynomialFeatures(degree=5)
 X_train_poly = poly.fit_transform(X_train)
 X_test_poly = poly.fit_transform(X_test)
 
-# 使用线性回归拟合多项式模型
+# Fit the model
 poly_reg = LinearRegression()
 poly_reg.fit(X_train_poly, y_train)
 y_pred_poly = poly_reg.predict(X_test_poly)
@@ -51,11 +51,11 @@ r2_poly = r2_score(y_test, y_pred_poly)
 print(f"Poly R^2 Score: {r2_poly}")
 
 
-# 测试决策树参数对测试集误差的影响
-depths = [3, 5, 7, 10]  # max_depth取值
-splitters = ['best', 'random']  # splitter取值
+# test different max_depth and splitter
+depths = [3, 5, 7, 10]  # max_depth
+splitters = ['best', 'random']  # splitter
 
-# 保存测试集误差
+# save the error
 print("Test diff depth of decision tree:")
 for depth in depths:
     for splitter in splitters:
@@ -65,29 +65,27 @@ for depth in depths:
         mse_1 = mean_squared_error(y_test, y_pred_1)  # 计算均方误差
         r2_1 = r2_score(y_test, y_pred_1)
         print(f"max_depth: {depth}, splitter: {splitter}, Test MSE: {mse_1}, Test R^2: {r2_1}")
-        # 最好的结果:
+        # best one:
         # max_depth: 10, splitter: best, Test MSE: 0.020857446079726286, Test R^2: 0.9199109127735708
 
 
-
-# 绘制图像
 fig, ax = plt.subplots(1, 3, figsize=(12, 6))
 
-# 绘制真实值的2D图像
+# true values
 sc1 = ax[0].scatter(X_test[:, 0], X_test[:, 1], c=y_test, cmap='viridis')
 ax[0].set_title("True Values")
 ax[0].set_xlabel("x1")
 ax[0].set_ylabel("x2")
 fig.colorbar(sc1, ax=ax[0], label="y")
 
-# Decsion Tree预测值
+# Decsion Tree predict values
 sc2 = ax[1].scatter(X_test[:, 0], X_test[:, 1], c=y_pred, cmap='viridis')
 ax[1].set_title("Decision Tree (max_depth=14)")
 ax[1].set_xlabel("x1")
 ax[1].set_ylabel("x2")
 fig.colorbar(sc2, ax=ax[1], label="y")
 
-# Poly预测值 
+# Poly predict values
 sc3 = ax[2].scatter(X_test[:, 0], X_test[:, 1], c=y_pred_poly, cmap='viridis')
 ax[2].set_title("Polynomial Regression")
 ax[2].set_xlabel("x1")
