@@ -50,14 +50,11 @@ else:
         depth_dir = os.path.join(base_dir, str(max_depth))
         os.makedirs(depth_dir, exist_ok=True)
 
-        mse_values = []  # 用于存储该深度下每个关节的MSE
+        mse_values = []  # store the MSE of each joint at this depth
 
-        # 针对每个关节训练和评估模型
         for joint_idx in range(7):
-            # 提取每个关节的数据
             y = q_mes_all[:, joint_idx]  # Shape: (N,)
 
-            # 数据划分
             X_train, X_test, y_train, y_test = train_test_split(
                 X, y, train_size=split_ratio, shuffle=True, random_state=42
             )
@@ -84,12 +81,12 @@ else:
             test_mse = np.mean((y_test - y_test_pred) ** 2)
             mse_values.append(test_mse)
 
-            # 保存模型
+            # save the model
             model_filename = os.path.join(depth_dir, f'rf_joint{joint_idx+1}_depth_{max_depth}.joblib')
             joblib.dump(rf_model, model_filename)
             print(f'Model for Joint {joint_idx+1} saved as {model_filename}')
 
-            # 绘制并保存该关节的预测轨迹图
+            # predict trajectory plt
             sorted_indices = np.argsort(X_test[:, 0])
             X_test_sorted = X_test[sorted_indices]
             y_test_sorted = y_test[sorted_indices]

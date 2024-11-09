@@ -21,12 +21,12 @@ start_time = time.time()
 
 # MLP Model Definition
 class JointAngleRegressor(nn.Module):
-    def __init__(self, hidden_units=512): # 自定义隐藏层神经元个数
+    def __init__(self, hidden_units=512): # CHANGE HERE
         super(JointAngleRegressor, self).__init__()
         self.model = nn.Sequential(
-            nn.Linear(4, hidden_units),  # Input layer to hidden layer (4 inputs: t, (x, y, z) 目标位置) 
-            nn.ReLU(), # 激活函数
-            nn.Linear(hidden_units, 1)   # Hidden layer to output layer (1 output: 每个时间t时刻，joint的位置)
+            nn.Linear(4, hidden_units),  # Input layer to hidden layer (4 inputs: t, (x, y, z) ) 
+            nn.ReLU(), # activation function
+            nn.Linear(hidden_units, 1)   # Hidden layer to output layer (1 output: at t，joint pos)
         )
 
     def forward(self, x):
@@ -102,8 +102,7 @@ if training_flag:
             test_dataset = JointDataset(x_test_time, goal_test, y_test)
 
             # Create data loaders
-            # 调整batch_size，越大训练速度越快，但是可能会导致过拟合；越小训练速度越慢，但是可能会导致欠拟合
-            train_loader = DataLoader(dataset=train_dataset, batch_size=32, shuffle=True) # 原batch_size=32
+            train_loader = DataLoader(dataset=train_dataset, batch_size=32, shuffle=True) # origianl batch_size=32
             test_loader = DataLoader(dataset=test_dataset, batch_size=32, shuffle=False)
 
             # Store loaders
@@ -113,12 +112,12 @@ if training_flag:
         
 
         # Training parameters
-        # 超参数调整
+        # CHANGE HERE
         epochs = 300
-        learning_rate = 0.1  # 学习率越大，训练速度越快，但是可能会导致震荡；学习率越小，训练速度越慢，但是可能会导致局部最优解
+        learning_rate = 0.1
 
-        for joint_idx in range(1): # 临时更改 只训练一个joint
-            joint_idx = 0  # 临时更改 只训练id+1的joint
+        for joint_idx in range(1): # try to train one joint per time
+            joint_idx = 0  # only train joint id+1
         # for joint_idx in range(7):
             
             # The name of the saved model
@@ -132,11 +131,12 @@ if training_flag:
             print(f'\nTraining model for Joint {joint_idx+1}')
 
             # Initialize the model, criterion, and optimizer
-            model = JointAngleRegressor() # hidden_units：越大模型越复杂，但是可能会导致过拟合；越小模型越简单，但是可能会导致欠拟合
+            model = JointAngleRegressor()
             criterion = nn.MSELoss()
             optimizer = optim.SGD(model.parameters(), lr=learning_rate)
-            # 使用cos衰减学习率
-            # scheduler = ExponentialLR(optimizer, gamma=0.98)  # gamma：每个epoch，lr*gamma
+
+            # Try Decay learning rate
+            # scheduler = ExponentialLR(optimizer, gamma=0.98)  # gamma：each epoch，lr*gamma
             scheduler = CosineAnnealingLR(optimizer, T_max=epochs)
 
             train_loader = train_loaders[joint_idx]
@@ -161,11 +161,11 @@ if training_flag:
 
                     epoch_loss += loss.item()
 
-                # scheduler.step() # 更新学习率
+                scheduler.step() # update learning rate
                 
                 train_loss = epoch_loss / len(train_loader)
                 train_losses.append(train_loss)
-                log_train_losses.append(np.log(train_loss))  # 计算log MSE
+                log_train_losses.append(np.log(train_loss))  # log MSE
 
                 # Evaluate on test set for this epoch
                 model.eval()
@@ -177,7 +177,7 @@ if training_flag:
                         test_loss += loss.item()
                 test_loss /= len(test_loader)
                 test_losses.append(test_loss)
-                log_test_losses.append(np.log(test_loss))  # 计算log MSE
+                log_test_losses.append(np.log(test_loss))  # log MSE
 
                 if (epoch + 1) % 10 == 0 or epoch == 0:
                     print(f'Epoch {epoch+1}/{epochs}, Train Loss: {train_loss:.6f}, Test Loss: {test_loss:.6f}')
@@ -185,7 +185,7 @@ if training_flag:
             # Final evaluation on test set
             print(f'Final Test Loss for Joint {joint_idx+1}: {test_losses[-1]:.6f}')
 
-            # Save the trained model 保存模型
+            # Save the trained model
             model_filename = os.path.join(script_dir, f'neuralq{joint_idx+1}.pt')
             # torch.save(model.state_dict(), model_filename) 
             print(f'Model for Joint {joint_idx+1} saved as {model_filename}')
@@ -293,7 +293,7 @@ if test_cartesian_accuracy_flag:
         'z': (0.12, 0.12)
     }
     # create a set of goal positions 
-    number_of_goal_positions_to_test = 1 # 随机测试的goal position数 原10
+    number_of_goal_positions_to_test = 10
     goal_positions = []
     for i in range(number_of_goal_positions_to_test):
         goal_positions.append([np.random.uniform(*goal_position_bounds['x']),
@@ -399,26 +399,23 @@ if test_cartesian_accuracy_flag:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
 
-            # 绘制预测的轨迹
+            # predicted trajectory plt
             ax.plot(cartesian_positions_over_time[:, 0], 
                     cartesian_positions_over_time[:, 1], 
                     cartesian_positions_over_time[:, 2], 
                     label='Predicted Trajectory')
 
-            # 绘制目标位置
+            # goal position
             ax.scatter(goal_position[0], goal_position[1], goal_position[2], color='red', label='Goal Position')
 
-            # 获取最后两个预测点的坐标
+            # final predicted position
             final_predicted_pos = cartesian_positions_over_time[-1]
-            second_last_predicted_pos = cartesian_positions_over_time[-2]
-
-            # 绘制最后一个预测点
             ax.scatter(final_predicted_pos[0], final_predicted_pos[1], final_predicted_pos[2], color='blue', label='Final Predicted Position')
 
-            # 计算误差
+            # error
             position_error = np.linalg.norm(final_predicted_pos - goal_position)
 
-            # 在图外右侧显示坐标和误差信息
+            # show error info
             info_text = (
                 f"Goal Position: ({goal_position[0]:.4f}, {goal_position[1]:.4f}, {goal_position[2]:.4f})\n"
                 f"Final Predicted Position: ({final_predicted_pos[0]:.4f}, {final_predicted_pos[1]:.4f}, {final_predicted_pos[2]:.4f})\n"
@@ -429,7 +426,6 @@ if test_cartesian_accuracy_flag:
                         bbox=dict(facecolor='white', edgecolor='purple', boxstyle='round,pad=0.5', alpha=0.85), 
                         horizontalalignment='center')
 
-            # 设置坐标轴和标题
             ax.set_xlabel('X Position (m)')
             ax.set_ylabel('Y Position (m)')
             ax.set_zlabel('Z Position (m)')

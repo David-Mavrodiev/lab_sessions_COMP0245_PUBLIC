@@ -67,7 +67,6 @@ if training_flag:
             y_test_list.append(y_test)
 
             # Initialize the Random Forest regressor
-            # 调整RF参数
             rf_model = RandomForestRegressor(
                 n_estimators=100,    # Number of trees
                 max_depth=max_depth,        # Maximum depth of the tree
@@ -99,7 +98,6 @@ if training_flag:
             print(f'Test MSE: {test_mse:.6f}')
 
             # Save the trained model
-            # 保存模型
             model_filename = os.path.join(script_dir, f'rf_joint{joint_idx+1}_depth_{max_depth}.joblib')
             # joblib.dump(rf_model, model_filename)
             print(f'Model for Joint {joint_idx+1} saved as {model_filename}')
@@ -266,26 +264,23 @@ if test_cartesian_accuracy_flag:
             fig = plt.figure()
             ax = fig.add_subplot(111, projection='3d')
 
-            # 绘制预测的轨迹
+            # predicted trajectory plt
             ax.plot(cartesian_positions_over_time[:, 0], 
                     cartesian_positions_over_time[:, 1], 
                     cartesian_positions_over_time[:, 2], 
                     label='Predicted Trajectory')
 
-            # 绘制目标位置
+            # goal position
             ax.scatter(goal_position[0], goal_position[1], goal_position[2], color='red', label='Goal Position')
 
-            # 获取最后两个预测点的坐标
+            # final predicted position
             final_predicted_pos = cartesian_positions_over_time[-1]
-            second_last_predicted_pos = cartesian_positions_over_time[-2]
-
-            # 绘制最后一个预测点
             ax.scatter(final_predicted_pos[0], final_predicted_pos[1], final_predicted_pos[2], color='blue', label='Final Predicted Position')
 
-            # 计算误差
+            # error
             position_error = np.linalg.norm(final_predicted_pos - goal_position)
 
-            # 在图外右侧显示坐标和误差信息
+            # show error info
             info_text = (
                 f"Goal Position: ({goal_position[0]:.4f}, {goal_position[1]:.4f}, {goal_position[2]:.4f})\n"
                 f"Final Predicted Position: ({final_predicted_pos[0]:.4f}, {final_predicted_pos[1]:.4f}, {final_predicted_pos[2]:.4f})\n"
@@ -296,7 +291,6 @@ if test_cartesian_accuracy_flag:
                         bbox=dict(facecolor='white', edgecolor='purple', boxstyle='round,pad=0.5', alpha=0.85), 
                         horizontalalignment='center')
 
-            # 设置坐标轴和标题
             ax.set_xlabel('X Position (m)')
             ax.set_ylabel('Y Position (m)')
             ax.set_zlabel('Z Position (m)')

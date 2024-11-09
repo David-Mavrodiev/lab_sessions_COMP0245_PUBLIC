@@ -28,7 +28,7 @@ if not training_flag:
         # Extract data
         time_array = np.array(data['time'])  
 
-# 存储轨迹、预测目标位置和误差信息
+# Stores trajectory, predicted target position and error information
 results = []
 
 for depth in depth_values:
@@ -55,7 +55,7 @@ for depth in depth_values:
         models.append(rf_model)
 
     # Generate new goal positions
-    goal_positions = [[0.6138, 0.0596, 0.12]]  # 设置一个固定的goal position
+    goal_positions = [[0.6138, 0.0596, 0.12]]  # Set a fixed goal position
 
     # Generate test time array
     test_time_array = np.linspace(time_array.min(), time_array.max(), 100)  # For example, 100 time steps
@@ -122,7 +122,7 @@ for depth in depth_values:
             joint_positions = predicted_joint_positions_over_time[i, :]
             cartesian_pos, _ = dyn_model.ComputeFK(joint_positions, controlled_frame_name)
             cartesian_positions_over_time.append(cartesian_pos.copy())
-            # print(f"Time step {i}: Cartesian position = {cartesian_pos}")  # 检查每个时间步的位置
+            # print(f"Time step {i}: Cartesian position = {cartesian_pos}")  # Check the position of each time step
 
         # cartesian_positions_over_time = np.array(cartesian_positions_over_time)  # Shape: (num_points, 3)
         
@@ -141,7 +141,7 @@ for depth in depth_values:
         #     print(f"Trajectory shape: {np.array(res['trajectory']).shape}")
         #     print(f"Trajectory data: {np.array(res['trajectory'])}")
 
-# 存储所有的results
+# Store all results in local storage
 results_filename = os.path.join(save_dir, f'results_depth_{depth}.pkl')
 with open(results_filename, 'wb') as f:
     pickle.dump(results, f)
