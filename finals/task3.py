@@ -16,12 +16,12 @@ import plotly.graph_objects as go
 
 # MLP Model Definition
 class MLP(nn.Module):
-    def __init__(self):
+    def __init__(self, hidden_size=512):
         super(MLP, self).__init__()
         self.model = nn.Sequential(
-            nn.Linear(4, 512),  # Input layer to hidden layer (4 inputs: time + goal positions)
+            nn.Linear(4, hidden_size),  # Input layer to hidden layer (4 inputs: time + goal positions)
             nn.ReLU(),
-            nn.Linear(512, 1)   # Hidden layer to output layer
+            nn.Linear(hidden_size, 1)   # Hidden layer to output layer
         )
 
     def forward(self, x):
@@ -46,7 +46,7 @@ def plot_actual_joint_trajectories(pos, vel, des_pos=None, des_vel=None):
                 axs[0].plot(des_pos[model_name][:, joint_idx], label='Desired Position', linestyle='--', color='orange', zorder=10)
             axs[0].set_title(f'{model_name} - Position')
             axs[0].set_xlabel('Time steps')
-            axs[0].set_ylabel('Position')
+            axs[0].set_ylabel('Position (rad)')
             axs[0].legend()
             axs[0].grid(True)
 
@@ -56,17 +56,17 @@ def plot_actual_joint_trajectories(pos, vel, des_pos=None, des_vel=None):
                 axs[1].plot(des_vel[model_name][:, joint_idx], label='Desired Velocity', linestyle='--', color='orange', zorder=10)
             axs[1].set_title(f'{model_name} - Velocity')
             axs[1].set_xlabel('Time steps')
-            axs[1].set_ylabel('Velocity')
+            axs[1].set_ylabel('Velocity (rad/s)')
             axs[1].legend()
             axs[1].grid(True)
 
             plt.tight_layout(rect=[0, 0, 1, 0.96])
-            if des_pos is not None and model_name in des_pos:
-                plt.savefig(f"/Users/joefarah/Desktop/Figures/ML_Final/Task_3/joint{joint_idx+1}_{model_name}_with_actual.png", dpi=300)
-            else:
-                plt.savefig(f"/Users/joefarah/Desktop/Figures/ML_Final/Task_3/joint{joint_idx+1}_{model_name}_desired_only.png", dpi=300)
-            # plt.show()
-            plt.close("all")
+            # if des_pos is not None and model_name in des_pos:
+            #     plt.savefig(f"/Users/joefarah/Desktop/Figures/ML_Final/Task_3/joint{joint_idx+1}_{model_name}_with_actual.png", dpi=300)
+            # else:
+            #     plt.savefig(f"/Users/joefarah/Desktop/Figures/ML_Final/Task_3/joint{joint_idx+1}_{model_name}_desired_only.png", dpi=300)
+            plt.show()
+            # plt.close("all")
 
 def plot_tracking_error_and_torque(tracking_errors, control_torques):
     num_joints = 7
@@ -107,7 +107,7 @@ def plot_tracking_error_and_torque(tracking_errors, control_torques):
         plt.tight_layout(rect=[0, 0, 1, 0.96])
         plt.savefig(f"/Users/joefarah/Desktop/Figures/ML_Final/Task_3/joint{joint_idx+1}_torque.png", dpi=300)
         # plt.show()
-        plt.close("all")
+        # plt.close("all")
 
 def plot_with_smoothed_data(pos, vel):
     model_names = list(pos.keys())
@@ -123,7 +123,7 @@ def plot_with_smoothed_data(pos, vel):
 
             # Plot smoothed position and velocity data
             axs[0].plot(pos[smoothed_model][:, joint_idx], label=f'Position (Smoothed)')
-            axs[1].plot(vel[smoothed_model][:, joint_idx], label=f'Velocity (Smoothed)')
+            axs[1].plot(vel[smoothed_model][:, joint_idx], label=f'Velocity (Smoothed)', zorder=10)
 
             # Plot original position and velocity data if available
             if original_model:
@@ -133,20 +133,20 @@ def plot_with_smoothed_data(pos, vel):
             # Configure plot labels and legends
             axs[0].set_title(f'{smoothed_model} - Position')
             axs[0].set_xlabel('Time steps')
-            axs[0].set_ylabel('Position')
+            axs[0].set_ylabel('Position (rad)')
             axs[0].legend()
             axs[0].grid(True)
 
             axs[1].set_title(f'{smoothed_model} - Velocity')
             axs[1].set_xlabel('Time steps')
-            axs[1].set_ylabel('Velocity')
+            axs[1].set_ylabel('Velocity (rad/s)')
             axs[1].legend()
             axs[1].grid(True)
 
             plt.tight_layout(rect=[0, 0, 1, 0.96])
-            plt.savefig(f"/Users/joefarah/Desktop/Figures/ML_Final/Task_3/joint{joint_idx+1}_smoothed.png", dpi=300)
-            # plt.show()
-            plt.close("all")
+            # plt.savefig(f"/Users/joefarah/Desktop/Figures/ML_Final/Task_3/joint{joint_idx+1}_{smoothed_model}_smoothed_with_original.png", dpi=300)
+            plt.show()
+            # plt.close("all")
 
 def plot_goal_vs_final_position_with_models(goal_position, final_positions):
     fig = plt.figure(figsize=(10, 8))
@@ -176,15 +176,15 @@ def plot_goal_vs_final_position_with_models(goal_position, final_positions):
         ax.text(mid_point[0], mid_point[1], mid_point[2], f'Error: {error:.3f}', color='black', fontsize=8)
 
     # Configure plot labels and legends
-    ax.set_xlabel('X Position')
-    ax.set_ylabel('Y Position')
-    ax.set_zlabel('Z Position')
+    ax.set_xlabel('X Position (m)')
+    ax.set_ylabel('Y Position (m)')
+    ax.set_zlabel('Z Position (m)')
     ax.legend(loc='upper left')
     ax.grid(True)
 
     plt.tight_layout(rect=[0, 0, 1, 0.96])
-    plt.savefig("/Users/joefarah/Desktop/Figures/ML_Final/Task_3/3dplot.png", dpi=300)
-    # plt.show()
+    # plt.savefig("/Users/joefarah/Desktop/Figures/ML_Final/Task_3/3dplot.png", dpi=300)
+    plt.show()
     plt.close("all")
 
     return ax.get_xlim(), ax.get_ylim(), ax.get_zlim()
@@ -247,9 +247,9 @@ def plot_goal_vs_final_position_with_models_plotly(goal_position, final_position
     fig.update_layout(
         title="Goal vs Final Position for All Models",
         scene=dict(
-            xaxis=dict(title="X Position", range=x_limits, backgroundcolor="white", gridcolor="lightgray", zerolinecolor="gray"),
-            yaxis=dict(title="Y Position", range=y_limits, backgroundcolor="white", gridcolor="lightgray", zerolinecolor="gray"),
-            zaxis=dict(title="Z Position", range=z_limits, backgroundcolor="white", gridcolor="lightgray", zerolinecolor="gray"),
+            xaxis=dict(title="X Position (m)", range=x_limits, backgroundcolor="white", gridcolor="lightgray", zerolinecolor="gray"),
+            yaxis=dict(title="Y Position (m)", range=y_limits, backgroundcolor="white", gridcolor="lightgray", zerolinecolor="gray"),
+            zaxis=dict(title="Z Position (m)", range=z_limits, backgroundcolor="white", gridcolor="lightgray", zerolinecolor="gray"),
         ),
         paper_bgcolor="white",  # Set the entire plot background to white
         plot_bgcolor="white",   # Set the 3D scene's surrounding area background to white
@@ -261,8 +261,8 @@ def plot_goal_vs_final_position_with_models_plotly(goal_position, final_position
         fig.show()
 
     # Save plot as HTML
-    fig.write_html(output_filename)
-    print(f"Interactive 3D plot saved as {output_filename}")
+    # fig.write_html(output_filename)
+    # print(f"Interactive 3D plot saved as {output_filename}")
 
 def main(neural_network_or_random_forest="neural_network", depth=None, goal_position=None, smoothing_alpha=None):
     # Load the saved data
@@ -510,7 +510,7 @@ if __name__ == '__main__':
     plot_tracking_error_and_torque(tracking_errors, control_torques)
     plot_with_smoothed_data(dict(list(desired_poss.items())[1:]), dict(list(desired_vels.items())[1:])) # Skip the first model as it is the Neural Network
     x_lim, y_lim, z_lim = plot_goal_vs_final_position_with_models(goal_positions[0], final_positions)
-    plot_goal_vs_final_position_with_models_plotly(goal_positions[0], final_positions, x_lim, y_lim, z_lim, show_plot=False)
+    plot_goal_vs_final_position_with_models_plotly(goal_positions[0], final_positions, x_lim, y_lim, z_lim, show_plot=True)
 
 
 

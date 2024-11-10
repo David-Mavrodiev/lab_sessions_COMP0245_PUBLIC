@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 
 # Set the visualization flag
 visualize = False  # Set to True to enable visualization, False to disable
-training_flag = False  # Set to True to train the models, False to skip training
+training_flag = True  # Set to True to train the models, False to skip training
 test_cartesian_accuracy_flag = True  # Set to True to test the model with a new goal position, False to skip testing
 
 # MLP Model Definition
@@ -113,7 +113,7 @@ if training_flag:
         for joint_idx in range(7):
 
             # The name of the saved model
-            model_filename = os.path.join(script_dir, f'mlp_models/neuralq{joint_idx+1}.pt')
+            model_filename = os.path.join(script_dir, f'mlp_models/def_neuralq{joint_idx+1}.pt')
 
             # If the save model file exists, assume it's been trained already and skip training it
             if os.path.isfile(model_filename):
@@ -168,7 +168,7 @@ if training_flag:
             print(f'Final Test Loss for Joint {joint_idx+1}: {test_losses[-1]:.6f}')
 
             # Save the trained model
-            model_filename = os.path.join(script_dir, f'mlp_models/neuralq{joint_idx+1}.pt')
+            model_filename = os.path.join(script_dir, f'mlp_models/def_neuralq{joint_idx+1}.pt')
             torch.save(model.state_dict(), model_filename)
             print(f'Model for Joint {joint_idx+1} saved as {model_filename}')
 
@@ -245,7 +245,7 @@ if test_cartesian_accuracy_flag:
         model = JointAngleRegressor()
 
         # Load the saved model
-        model_filename = os.path.join(script_dir, f'mlp_models/neuralq{joint_idx+1}.pt')
+        model_filename = os.path.join(script_dir, f'mlp_models/def_neuralq{joint_idx+1}.pt')
         try:
             model.load_state_dict(torch.load(model_filename, weights_only=False))
 
