@@ -55,7 +55,7 @@ def main():
     # Simulation parameters
     time_step = sim.GetTimeStep()
     current_time = 0
-    max_time = 5  # seconds
+    max_time = 10  # seconds
     
     # Command and control loop
     cmd = MotorCommands()  # Initialize command structure for motors
@@ -66,10 +66,11 @@ def main():
     # Initialize data storage
     tau_mes_all = []
     regressor_all = []
-
+    time_all = []
 
     # Data collection loop
     while current_time < max_time:
+        time_all.append(current_time)
         # Measure current state
         q_mes = sim.GetMotorAngles(0)
         qd_mes = sim.GetMotorVelocities(0)
@@ -99,12 +100,11 @@ def main():
 
         
         # TODO Compute regressor and store it
-        if current_time > 0.75:
         # Store the regressor and the measured torque
-        
-            regressor_all.append(dyn_model.ComputeDynamicRegressor(q_mes,qd_mes, qdd_mes))
-            tau_mes_all.append(tau_mes)
-        
+        # if current_time >= 0.5: # Skip the first 0.5 seconds to avoid transient effects
+        regressor_all.append(dyn_model.ComputeDynamicRegressor(q_mes,qd_mes, qdd_mes))
+        tau_mes_all.append(tau_mes)
+            
         
         current_time += time_step
         # Optional: print current time
@@ -152,6 +152,7 @@ def main():
     print(f"Adjusted R-squared: {adjusted_r2}")
     print(f"F-statistic: {f_statistic}")
     print(f"MAE: {mae}")
+    # results.write("NOISE LEVEL: 0.0001")
     # results.write(f"\n\n\nAdjusted R-squared: {adjusted_r2}")
     # results.write(f"\n\nF-statistic: {f_statistic}")
     # results.write(f"\n\nConfidence intervals: {conf_intervals}")
@@ -181,6 +182,7 @@ def main():
 
     # Show the combined plot
     plt.tight_layout()
+    # plt.savefig("/Users/joefarah/Desktop/Figures/ML_Lab_1/0,0001.png")
     plt.show()
 
     
